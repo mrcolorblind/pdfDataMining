@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[8]:
+
+
+from pdf2image import convert_from_path
+import PyPDF2 
+import textract
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+import pdftotext
+from tkinter import *
+from tkinter import filedialog
+from PIL import ImageTk, Image
+
+
+# In[10]:
+
+
+root = Tk()
+root.title("Minerador - Boletos BB")
+root.minsize(500,500)
+root.filename = filedialog.askopenfilename(initialdir = "../data/samples", title = "Escolha o arquivo:", filetypes=(("Arquivos PDF", "*.pdf"),))
+
+
+# In[118]:
+
+
+# filename = "../data/NF_BOLETOS_SETEMBRO_2019/25_SETEMBRO_2019/POLICONT_REC.TRIBUTOS.pdf"
+# Load your PDF
+with open(root.filename, "rb") as f:
+    pdf = pdftotext.PDF(f)
+text = ("".join(pdf))
+lines = text.splitlines()
+
+
+# In[119]:
+
+
+#The word_tokenize() function will break our text phrases into #individual words
+tokens = word_tokenize(text)
+#we'll create a new list which contains punctuation we wish to clean
+punctuations = ['(',')',';','[',']',':',',','.','-','--']
+#We initialize the stopwords variable which is a list of words like #"The", "I", "and", etc. that don't hold much value as keywords
+stop_words = stopwords.words('portuguese')
+#We create a list comprehension which only returns a list of words #that are NOT IN stop_words and NOT IN punctuations.
+keywords = [word for word in tokens if not word.lower() in stop_words and not word in punctuations]
+
+
+# In[122]:
+
+
+for i in range(3, len(keywords)):
+    if (keywords[i-1].lower() == 'pagamento' and keywords[i-2].lower() == 'data'):
+        data = keywords[i]
+    if (keywords[i-1].lower() == "cliente"):
+        cliente = ''
+        j = 0
+        while(1):
+            cliente = cliente + " " + (keywords[i+j])
+            j+=1
+            if (keywords[i+j].lower() == 'agencia' or j > 5):
+                break
+    if (keywords[i-1].lower() == 'agencia'):
+        agencia = keywords[i]
+    if (keywords[i-1].lower() == 'conta'):
+        conta = keywords[i]
+    if (keywords[i-2].lower() == 'valor'):
+        valor = keywords[i]
+
+
+# In[123]:
+
+images = convert_from_path(root.filename)
+img = images[0]
+myImage = ImageTk.PhotoImage(img.resize((1000,1000)))
+label0 = Label(root, text = data).pack()
+label1 = Label(root, text = cliente).pack()
+label2 = Label(root, text = agencia).pack()
+label3 = Label(root, text = conta).pack()
+label4 = Label(root, text = valor).pack()
+label5  = Label(root, image = myImage).pack()
+root.mainloop()
+
