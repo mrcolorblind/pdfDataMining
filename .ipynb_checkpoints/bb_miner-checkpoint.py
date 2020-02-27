@@ -14,6 +14,7 @@ import pdftotext
 from tkinter import *
 from tkinter import filedialog
 from PIL import ImageTk, Image
+import re
 
 
 # In[10]:
@@ -55,13 +56,21 @@ keywords = [word for word in tokens if not word.lower() in stop_words and not wo
 for i in range(3, len(keywords)):
     if (keywords[i-1].lower() == 'pagamento' and keywords[i-2].lower() == 'data'):
         data = keywords[i]
-    if (keywords[i-1].lower() == "cliente"):
+    if (keywords[i-1].lower() == "convenio"):
         cliente = ''
         j = 0
         while(1):
             cliente = cliente + " " + (keywords[i+j])
             j+=1
-            if (keywords[i+j].lower() == 'agencia' or j > 5):
+            if (keywords[i+j].lower() == 'codigo' or j > 5):
+                break
+    if (keywords[i-1].lower() == "fantasia" and keywords[i-2].lower() == 'nome'):
+        cliente = ''
+        j = 0
+        while(1):
+            cliente = cliente + " " + (keywords[i+j])
+            j+=1
+            if (keywords[i+j].lower() == 'cnpj' or j > 5):
                 break
     if (keywords[i-1].lower() == 'agencia'):
         agencia = keywords[i]
@@ -70,17 +79,16 @@ for i in range(3, len(keywords)):
     if (keywords[i-2].lower() == 'valor'):
         valor = keywords[i]
 
+fileLastName = root.filename.split("/")[-1]
+notaFiscal = re.findall(r"NF\d+|nf\d+|\d+", fileLastName)
 
 # In[123]:
 
-images = convert_from_path(root.filename)
-img = images[0]
+result = "Extrato bancario;"+data+";"+valor+";2059;1174;VR PAGO REF FORNECEDOR"+cliente+" NF "+notaFiscal[-1]
+images  = convert_from_path(root.filename)
+img     = images[0]
 myImage = ImageTk.PhotoImage(img.resize((1000,1000)))
-label0 = Label(root, text = data).pack()
-label1 = Label(root, text = cliente).pack()
-label2 = Label(root, text = agencia).pack()
-label3 = Label(root, text = conta).pack()
-label4 = Label(root, text = valor).pack()
-label5  = Label(root, image = myImage).pack()
+label0  = Label(root, text = result).pack()
+label1  = Label(root, image = myImage).pack()
 root.mainloop()
 
